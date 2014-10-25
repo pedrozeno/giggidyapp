@@ -1,65 +1,74 @@
 package ncirl.project.giggidymobileapp.volley;
 
-import android.app.DownloadManager.Request;
-import android.content.Context;
-import android.graphics.Bitmap;
-import android.support.v4.util.LruCache;
+/**
+ * Rather than using the convenience RequestQueue method provided by Volley
+ * I am instead creating a singleton class. This class will make sure only 
+ * one instance of the Request Queue ever exists.
+ *
+ * @author Patrick Byrne
+ * Referenced from http://developer.android.com/training/volley/requestqueue.html
+ * @version 1.0
+ */
 
+import ncirl.project.giggidymobileapp.cache.LruBitmapCache;
+import android.app.Application;
+import android.text.TextUtils;
+ 
+import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.ImageLoader;
 import com.android.volley.toolbox.Volley;
-
-public class VolleySingleton {
-	
-	private static VolleySingleton mInstance;
-    private RequestQueue mRequestQueue;
-    private ImageLoader mImageLoader;
-    private static Context mCtx;
-
-    private VolleySingleton(Context context) {
-        mCtx = context;
-        mRequestQueue = getRequestQueue();
-
-        mImageLoader = new ImageLoader(mRequestQueue,
-                new ImageLoader.ImageCache() {
-            private final LruCache<String, Bitmap>
-                    cache = new LruCache<String, Bitmap>(20);
-
-            @Override
-            public Bitmap getBitmap(String url) {
-                return cache.get(url);
-            }
-
-            @Override
-            public void putBitmap(String url, Bitmap bitmap) {
-                cache.put(url, bitmap);
-            }
-        });
+ 
+public class VolleySingleton extends Application {
+ 
+    public static final String TAG = VolleySingleton.class.getSimpleName();
+ 
+    private RequestQueue mQueue;
+    private ImageLoader mImgLoader;
+ 
+    private static VolleySingleton mInstance;
+ 
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        mInstance = this;
     }
-
-    public static synchronized VolleySingleton getInstance(Context context) {
-        if (mInstance == null) {
-            mInstance = new VolleySingleton(context);
-        }
+ 
+    public static synchronized VolleySingleton getInstance() {
         return mInstance;
     }
-
+ 
     public RequestQueue getRequestQueue() {
-        if (mRequestQueue == null) {
-            // getApplicationContext() is key, it keeps you from leaking the
-            // Activity or BroadcastReceiver if someone passes one in.
-            mRequestQueue = Volley.newRequestQueue(mCtx.getApplicationContext());
+        if (mQueue == null) {
+            mQueue = Volley.newRequestQueue(getApplicationContext());
         }
-        return mRequestQueue;
+ 
+        return mQueue;
     }
-
-    public <T> void addToRequestQueue(Request<T> req) {
+ 
+    public ImageLoader getImageLoader() {
+        getRequestQueue();
+        if (mImgLoader == null) {
+            mImgLoader = new ImageLoader(this.mQueue,
+                    new LruBitmapCache());
+        }
+        return this.mImgLoader;
+    }
+ 
+    public <T> void addToRequestQueue(Request<T> req, String tag) {
+        // set the default tag if tag is empty
+        req.setTag(TextUtils.isEmpty(tag) ? TAG : tag);
         getRequestQueue().add(req);
     }
-
-    public ImageLoader getImageLoader() {
-        return mImageLoader;
+ 
+    public <T> void addToRequestQueue(Request<T> req) {
+        req.setTag(TAG);
+        getRequestQueue().add(req);
+    }
+ 
+    public void cancelPendingRequests(Object tag) {
+        if (mQueue != null) {
+            mQueue.cancelAll(tag);
+        }
     }
 }
-
-
