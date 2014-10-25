@@ -21,9 +21,9 @@
         android:layout_toRightOf="@+id/artistImg"
         android:textStyle="bold" />
  
-    <!-- Gig Name -->
+    <!-- Venue Name -->
     <TextView
-        android:id="@+id/gigDate"
+        android:id="@+id/venueName"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/title"
