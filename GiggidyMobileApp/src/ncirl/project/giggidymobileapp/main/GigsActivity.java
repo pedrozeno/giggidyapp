@@ -1,5 +1,6 @@
-package ncirl.project.giggidymobileapp;
+package ncirl.project.giggidymobileapp.main;
 
+import ncirl.project.giggidymobileapp.R;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
